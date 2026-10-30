@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#172c49">
+<title>MyClass - Student Manager</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6fa;color:#26364a}
+header{background:#172c49;color:white;padding:24px}
+header h1{margin:0}
+header p{color:#ccd8e8}
+main{max-width:950px;margin:auto;padding:20px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:white;padding:18px;border-radius:14px;margin-bottom:15px;box-shadow:0 2px 8px #0000000b}
+.stat{background:#e6edf7;border-radius:12px;padding:15px}
+.stat strong{display:block;font-size:26px}
+h2{font-size:19px}
+button{border:0;background:#203e63;color:white;padding:11px 15px;border-radius:9px;cursor:pointer}
+input,textarea{width:100%;padding:12px;margin:7px 0;border:1px solid #d7deea;border-radius:8px;font:inherit}
+.item{padding:13px 0;border-bottom:1px solid #eee}
+.small{font-size:13px;color:#778397}
+.done{text-decoration:line-through;color:#888}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.delete{background:#b83e48}
+</style>
+</head>
+<body>
+<header>
+<h1>MyClass 🎓</h1>
+<p>Student Task Manager</p>
+<h2>Halo, Angga!</h2>
+<p>Atur mata kuliah dan tugas kuliahmu di sini.</p>
+</header>
+<main>
+<div class="stats">
+<div class="stat"><strong id="totalMK">0</strong>Mata Kuliah</div>
+<div class="stat"><strong id="totalTugas">0</strong>Tugas Belum Selesai</div>
+</div>
+
+<section class="card">
+<h2>Tambah Mata Kuliah</h2>
+<input id="namaMK" placeholder="Nama mata kuliah">
+<button onclick="tambahMK()">+ Tambah Mata Kuliah</button>
+</section>
+
+<section class="card">
+<h2>Daftar Mata Kuliah</h2>
+<div id="daftarMK">Belum ada mata kuliah.</div>
+</section>
+
+<section class="card">
+<h2>Daftar Semua Tugas</h2>
+<div id="daftarTugas">Belum ada tugas.</div>
+</section>
+</main>
+<script>
+let mk=JSON.parse(localStorage.getItem("mk")||"[]");
+let tugas=JSON.parse(localStorage.getItem("tugas")||"[]");
+
+function simpan(){
+localStorage.setItem("mk",JSON.stringify(mk));
+localStorage.setItem("tugas",JSON.stringify(tugas));
+tampil();
+}
+
+function tambahMK(){
+let nama=document.getElementById("namaMK").value.trim();
+if(!nama)return alert("Isi nama mata kuliah!");
+mk.push({id:Date.now(),nama});
+document.getElementById("namaMK").value="";
+simpan();
+}
+
+function tambahTugas(id){
+let nama=prompt("Nama tugas:");
+if(!nama)return;
+let deadline=prompt("Deadline (contoh: 2026-11-05):");
+tugas.push({id:Date.now(),mk:id,nama,deadline,selesai:false});
+simpan();
+}
+
+function tampil(){
+document.getElementById("totalMK").textContent=mk.length;
+document.getElementById("totalTugas").textContent=tugas.filter(t=>!t.selesai).length;
+
+document.getElementById("daftarMK").innerHTML=mk.map(m=>`
+<div class="item">
+<strong>${aman(m.nama)}</strong>
+<div class="actions">
+<button onclick="tambahTugas(${m.id})">+ Tambah Tugas</button>
+<button class="delete" onclick="hapusMK(${m.id})">Hapus</button>
+</div>
+</div>`).join("")||"Belum ada mata kuliah.";
+
+document.getElementById("daftarTugas").innerHTML=tugas.map(t=>`
+<div class="item">
+<strong class="${t.selesai?'done':''}">${aman(t.nama)}</strong>
+<div class="small">${aman(mk.find(m=>m.id===t.mk)?.nama||"Mata kuliah dihapus")} · Deadline: ${aman(t.deadline||"-")}</div>
+<div class="actions">
+<button onclick="selesai(${t.id})">${t.selesai?'Batalkan':'Tandai Selesai'}</button>
+<button onclick="hapusTugas(${t.id})" class="delete">Hapus</button>
+</div>
+</div>`).join("")||"Belum ada tugas.";
+}
+
+function aman(s){
+return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function selesai(id){
+let t=tugas.find(t=>t.id===id);
+if(t)t.selesai=!t.selesai;
+simpan();
+}
+function hapusTugas(id){
+if(confirm("Hapus tugas ini?")){
+tugas=tugas.filter(t=>t.id!==id);simpan();
+}
+}
+function hapusMK(id){
+if(confirm("Hapus mata kuliah dan tugas terkait?")){
+mk=mk.filter(m=>m.id!==id);
+tugas=tugas.filter(t=>t.mk!==id);
+simpan();
+}
+}
+tampil();
+</script>
+</body>
+</html>
