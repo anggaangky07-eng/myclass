@@ -6,192 +6,305 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#172c49">
 <title>MyClass - Student Manager</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#f3f5f9;color:#24364d;font-family:Arial,sans-serif}
-header{background:#172c49;color:white;padding:25px}
+body{
+ margin:0;
+ background:#f3f5f9;
+ color:#24364d;
+ font-family:Arial,sans-serif;
+}
+header{
+ background:#172c49;
+ color:white;
+ padding:25px;
+}
 header h1{margin:0}
-main{max-width:650px;margin:35px auto;padding:15px}
-.card{background:white;padding:25px;border-radius:16px;box-shadow:0 4px 18px #0000000b}
-input{width:100%;padding:13px;margin:8px 0 17px;border:1px solid #d8deea;border-radius:9px;font-size:15px}
-button{padding:13px;border:0;border-radius:9px;background:#203e63;color:white;cursor:pointer;font-size:14px}
-button:disabled{opacity:.5}
-.full{width:100%;margin:5px 0}
-.secondary{background:#e9eef5;color:#203e63}
+header p{color:#cbd7e7}
+main{
+ max-width:600px;
+ margin:40px auto;
+ padding:16px;
+}
+.card{
+ background:white;
+ padding:25px;
+ border-radius:16px;
+ box-shadow:0 4px 18px #0000000b;
+}
+.logo{
+ text-align:center;
+ font-size:40px;
+}
+input{
+ width:100%;
+ padding:13px;
+ margin:8px 0 17px;
+ border:1px solid #d8deea;
+ border-radius:9px;
+ font-size:15px;
+}
 label{font-size:14px;font-weight:bold}
-#message{padding:12px;border-radius:8px;background:#edf2f8;margin-top:15px;display:none;overflow-wrap:anywhere}
-#dashboard{display:none}
+button{
+ width:100%;
+ padding:13px;
+ margin:6px 0;
+ border:0;
+ border-radius:9px;
+ background:#203e63;
+ color:white;
+ cursor:pointer;
+ font-size:15px;
+}
+.secondary{background:#e9eef5;color:#203e63}
+button:disabled{opacity:.5}
 .small{color:#778397;font-size:13px}
+#message{
+ display:none;
+ padding:12px;
+ border-radius:8px;
+ background:#edf2f8;
+ margin-top:15px;
+ overflow-wrap:anywhere;
+}
+#dashboard{display:none}
 </style>
 </head>
+
 <body>
+
 <header>
 <h1>MyClass 🎓</h1>
 <p>Student Task Manager</p>
 </header>
 
 <main>
+
 <section class="card" id="auth">
+<div class="logo">🎓</div>
 <h2 id="formTitle">Selamat Datang!</h2>
-<p class="small">Masuk atau buat akun MyClass untuk mengelola perkuliahanmu.</p>
+<p class="small">
+Masuk atau buat akun MyClass untuk mengelola perkuliahanmu.
+</p>
 
 <form id="authForm">
 <label>Email</label>
-<input id="email" type="email" placeholder="Masukkan email" required>
+<input id="email" type="email"
+placeholder="Masukkan email" required>
 
 <label>Password</label>
-<input id="password" type="password" placeholder="Minimal 8 karakter" minlength="8" required>
+<input id="password" type="password"
+placeholder="Minimal 8 karakter"
+minlength="8" required>
 
-<button class="full" id="loginBtn" type="submit">Masuk</button>
-<button class="full secondary" id="signupBtn" type="button">Daftar Akun Baru</button>
+<button id="loginBtn" type="submit">Masuk</button>
+
+<button class="secondary" id="signupBtn" type="button">
+Daftar Akun Baru
+</button>
 </form>
+
 <div id="message" role="status"></div>
 </section>
 
 <section class="card" id="dashboard">
-<h2>Halo, Angga! 👋</h2>
-<p class="small">Kamu berhasil masuk ke MyClass.</p>
+<div class="logo">👋</div>
+<h2>Selamat Datang di MyClass!</h2>
+<p class="small">Kamu berhasil masuk.</p>
 <p id="userEmail"></p>
-<p>Selamat datang di ruang pengelolaan mata kuliah dan tugasmu.</p>
-<button class="full" id="logoutBtn">Keluar dari Akun</button>
+<button id="logoutBtn">Keluar dari Akun</button>
 </section>
+
 </main>
 
 <script>
+
+// ==================================
+// KONFIGURASI SUPABASE
+// ==================================
+
 const SUPABASE_URL = "TEMPEL_PROJECT_URL_DI_SINI";
 const SUPABASE_KEY = "TEMPEL_PUBLISHABLE_KEY_DI_SINI";
+
+// ==================================
+// INISIALISASI
+// ==================================
 
 const authBox = document.getElementById("auth");
 const dashboard = document.getElementById("dashboard");
 const message = document.getElementById("message");
+
 const loginBtn = document.getElementById("loginBtn");
 const signupBtn = document.getElementById("signupBtn");
 
-let supabaseClient;
+let client = null;
+
+function initSupabase(){
+ if(
+ !SUPABASE_URL.startsWith("https://") ||
+ SUPABASE_URL.includes("https://qyvrqbdblzbmydiazgra.supabase.co/rest/v1/") ||
+ SUPABASE_KEY.startsWith("sb_publishable_mKHIKdES4MD6_dbExTBnHQ_-eee4wbm")
+ ){
+ showMessage("Project URL atau Publishable Key belum diisi.");
+ return false;
+ }
+
+ if(!client){
+ client = window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+ );
+ }
+ return true;
+}
 
 function showMessage(text){
-  message.style.display = "block";
-  message.textContent = text;
+ message.style.display = "block";
+ message.textContent = text;
 }
 
 function showDashboard(user){
-  authBox.style.display = "none";
-  dashboard.style.display = "block";
-  document.getElementById("userEmail").textContent =
-    "Akun: " + user.email;
+ authBox.style.display = "none";
+ dashboard.style.display = "block";
+ document.getElementById("userEmail").textContent =
+ "Akun: " + user.email;
 }
 
 function showLogin(){
-  authBox.style.display = "block";
-  dashboard.style.display = "none";
+ authBox.style.display = "block";
+ dashboard.style.display = "none";
 }
 
-function getClient(){
-  if(!SUPABASE_URL.startsWith("https://") ||
-     SUPABASE_KEY.startsWith("TEMPEL")){
-    showMessage("Isi Project URL dan Publishable Key terlebih dahulu.");
-    return false;
-  }
-  if(!supabaseClient){
-    supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-  }
-  return true;
-}
+// ==================================
+// LOGIN
+// ==================================
 
-document.getElementById("authForm").addEventListener("submit",async(e)=>{
-  e.preventDefault();
-  if(!getClient())return;
+document.getElementById("authForm")
+.addEventListener("submit",async(e)=>{
+ e.preventDefault();
 
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
+ if(!initSupabase())return;
 
-  loginBtn.disabled=true;
-  signupBtn.disabled=true;
-  showMessage("Sedang memproses login...");
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
 
-  const {data,error}=await supabaseClient.auth.signInWithPassword({
-    email,password
-  });
+ loginBtn.disabled=true;
+ signupBtn.disabled=true;
 
-  loginBtn.disabled=false;
-  signupBtn.disabled=false;
+ showMessage("Sedang memproses login...");
 
-  if(error){
-    showMessage("Login gagal: "+error.message);
-    return;
-  }
+ try{
+ const {data,error}=await client.auth.signInWithPassword({
+ email,password
+ });
 
-  showDashboard(data.user);
+ if(error)throw error;
+
+ showDashboard(data.user);
+ }catch(error){
+ showMessage("Login gagal: "+error.message);
+ }finally{
+ loginBtn.disabled=false;
+ signupBtn.disabled=false;
+ }
 });
+
+// ==================================
+// DAFTAR AKUN
+// ==================================
 
 signupBtn.addEventListener("click",async()=>{
-  if(!getClient())return;
+ if(!initSupabase())return;
 
-  const email=document.getElementById("email").value.trim();
-  const password=document.getElementById("password").value;
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
 
-  if(!email || password.length<8){
-    showMessage("Isi email dan password minimal 8 karakter.");
-    return;
-  }
+ if(!email || password.length<8){
+ showMessage("Isi email dan password minimal 8 karakter.");
+ return;
+ }
 
-  loginBtn.disabled=true;
-  signupBtn.disabled=true;
-  showMessage("Sedang membuat akun...");
+ loginBtn.disabled=true;
+ signupBtn.disabled=true;
 
-  const {data,error}=await supabaseClient.auth.signUp({
-    email,
-    password,
-    options:{
-      emailRedirectTo:window.location.origin+window.location.pathname
-    }
-  });
+ showMessage("Sedang membuat akun...");
 
-  loginBtn.disabled=false;
-  signupBtn.disabled=false;
+ try{
+ const {data,error}=await client.auth.signUp({
+ email,
+ password,
+ options:{
+ emailRedirectTo:
+ window.location.origin+window.location.pathname
+ }
+ });
 
-  if(error){
-    showMessage("Pendaftaran gagal: "+error.message);
-    return;
-  }
+ if(error)throw error;
 
-  if(data.session){
-    showDashboard(data.user);
-  }else{
-    showMessage("Pendaftaran berhasil! Periksa email untuk konfirmasi akun, kemudian login.");
-  }
+ if(data.session){
+ showDashboard(data.user);
+ }else{
+ showMessage(
+ "Pendaftaran berhasil! Silakan periksa email untuk konfirmasi akun."
+ );
+ }
+
+ }catch(error){
+ showMessage("Pendaftaran gagal: "+error.message);
+ }finally{
+ loginBtn.disabled=false;
+ signupBtn.disabled=false;
+ }
 });
 
-document.getElementById("logoutBtn").addEventListener("click",async()=>{
-  if(!getClient())return;
-  const {error}=await supabaseClient.auth.signOut();
-  if(error){
-    showMessage("Gagal keluar: "+error.message);
-    return;
-  }
-  showLogin();
+// ==================================
+// LOGOUT
+// ==================================
+
+document.getElementById("logoutBtn")
+.addEventListener("click",async()=>{
+ if(!client)return;
+
+ const {error}=await client.auth.signOut();
+
+ if(error){
+ showMessage("Gagal keluar: "+error.message);
+ return;
+ }
+
+ showLogin();
 });
+
+// ==================================
+// PERIKSA SESI LOGIN
+// ==================================
 
 async function checkSession(){
-  if(!getClient())return;
-  const {data,error}=await supabaseClient.auth.getSession();
-  if(error){
-    showMessage(error.message);
-    return;
-  }
-  if(data.session){
-    showDashboard(data.session.user);
-  }
+ if(!initSupabase())return;
+
+ const {data,error}=await client.auth.getSession();
+
+ if(error){
+ showMessage(error.message);
+ return;
+ }
+
+ if(data.session){
+ showDashboard(data.session.user);
+ }
 }
 
-if(SUPABASE_URL.startsWith("https://") &&
-   !SUPABASE_KEY.startsWith("TEMPEL")){
-  checkSession();
+if(
+ SUPABASE_URL.startsWith("https://") &&
+ !SUPABASE_URL.includes("TEMPEL") &&
+ !SUPABASE_KEY.startsWith("TEMPEL")
+){
+ checkSession();
 }
+
 </script>
 </body>
 </html>
